@@ -1,0 +1,6 @@
+FROM debian:testing
+RUN apt-get update && apt-get install --no-install-recommends -y apktool ca-certificates curl default-jdk
+RUN cd /opt && curl -sSL https://download-cdn.jetbrains.com/idea/ideaIC-2023.3.3.tar.gz | gzip -d | tar -x
+RUN cd /opt && curl -sSL https://github.com/pxb1988/dex2jar/releases/download/v2.4/dex-tools-v2.4.zip > dex2jar.zip && unzip dex2jar.zip && rm dex2jar.zip
+COPY extract /
+CMD /extract

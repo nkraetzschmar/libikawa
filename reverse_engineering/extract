@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+shopt -s nullglob
+
+dir="$(realpath .)"
+tmp="$(mktemp -d)"
+cd "$tmp"
+
+for apk in "$dir"/*.apk; do
+	name="$(basename "$apk" .apk)"
+	apktool decode --no-res --no-src --output "$name" "$apk"
+	cd "$name"
+	mkdir classes
+
+	for f in *.dex; do
+		/opt/dex-tools-v2.4/d2j-dex2jar.sh --output "$f.jar" "$f"
+		(cd classes && jar -xvf "../$f.jar")
+	done
+
+	mkdir src
+	java -cp \
+		'/opt/idea-IC-233.14015.106/plugins/java-decompiler/lib/java-decompiler.jar' org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler \
+		-dgs=true \
+		classes/com/ikawacoffee src/
+
+	cd ..
+	cp -r "$name" "$dir/"
+done
+
+cd /
+rm -rf "$tmp"
