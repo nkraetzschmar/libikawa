@@ -1,0 +1,366 @@
+syntax = "proto3";
+
+package ikawa;
+
+// --- ENUMS ---
+
+enum CmdType {
+	BOOTLOADER_GET_VERSION = 0;
+	// BOOTLOADER_JUMP = 1;
+	MACH_PROP_GET_TYPE = 2;
+	MACH_PROP_GET_ID = 3;
+	MACH_STATUS_GET_ERROR = 10;
+	MACH_STATUS_GET_ALL = 11;
+	HIST_GET_ROAST_COUNT = 12;
+	HIST_GET_TOTAL_ROAST_COUNT = 13;
+	PROFILE_GET = 15;
+	PROFILE_SET = 16;
+	SETTING_GET = 17;
+	SETTING_SET = 18;
+	SETTING_GET_INFO = 19;
+	SETTING_GET_LIST = 20;
+	MACH_REBOOT = 21;
+	MACH_STATUS_GET_SENSORS = 22;
+	MACH_PROP_GET_SUPPORT_INFO = 23;
+	START_TEST = 24;
+	TEST_STATUS_GET = 25;
+	END_TEST = 26;
+	MACH_STATUS_GET_TIME = 27;
+	MACH_PROP_GET_NAME = 28;
+	MACH_PROP_SET_NAME = 29;
+	ROAST_SUMMARY_GET = 30;
+}
+
+enum MachState {
+	IDLE = 0;
+	PRE_HEAT = 1;
+	READY_FOR_ROAST = 2;
+	ROASTING = 3;
+	BUSY = 4;
+	COOLDOWN = 5;
+	DOSER_OPEN = 6;
+	ERROR = 7;
+	READY_TO_BLOWOVER = 8;
+	TEST_MODE = 9;
+}
+
+enum ProfileType {
+	ProfileTypeUser = 0;
+	ProfileTypeIkawa = 1;
+	ProfileType3rdParty = 2;
+}
+
+enum Test {
+	NO_TEST = 0;
+	BUTTON_TEST = 1;
+	LED_TEST = 2;
+	CALIBRATE_TEMP_SENSORS = 3;
+	TEST_TEMP_SENSORS = 4;
+	TEST_FAN_ERROR = 5;
+	TEST_FAN_SPIN = 6;
+	TEST_FAN_STOP = 7;
+	TEST_HEATER_RELAY = 8;
+	TEST_HEATER_PWM = 9;
+	TEST_DOSER = 10;
+	TEST_BOARD_TEMP = 11;
+	TEST_INVALID = 12;
+	FLASH_BLE_FIRMWARE = 13;
+	FLASH_AVR_FIRMWARE = 14;
+}
+
+enum TestStatus {
+	NO_TEST_STARTED = 0;
+	TEST_IN_PROGRESS = 1;
+	TEST_SUCCESS = 2;
+}
+
+enum TestFailure {
+	NO_FAILURE = 0;
+	BUTTONS_NOT_RESPONDING = 1;
+	BUTTON_1_NOT_RESPONDING = 2;
+	BUTTON_2_NOT_RESPONDING = 3;
+	BUTTONS_SHORT_TO_GROUND = 4;
+	BUTTON_1_SHORT_TO_GROUND = 5;
+	BUTTON_2_SHORT_TO_GROUND = 6;
+	HEATER_RELAY_NOT_CLOSING = 7;
+	HEATER_RELAY_NOT_OPENING = 8;
+	DOSER_NOT_CLOSING = 9;
+	DOSER_NOT_OPENING = 10;
+	HEATER_PWM_FAILED = 11;
+	ROOM_TEMP_NOT_SET = 12;
+	NTC_TOLERANCE_NOT_SET = 13;
+	BOARD_TEMP_OUT_OF_RANGE = 14;
+	MIN_FAN_RPM_NOT_SET = 15;
+	FAN_RPM_TOO_LOW = 16;
+	FAN_RPM_ZERO = 17;
+	FAN_BREAK_NOT_WORKING = 18;
+	FAN_FAULT_NOT_WORKING = 20;
+	TEMP_ABOVE_OUT_OF_RANGE = 21;
+	TEMP_BELOW_OUT_OF_RANGE = 22;
+	TEMP_ABOVE_M_OUT_OF_RANGE = 23;
+	TEMP_ABOVE_C_OUT_OF_RANGE = 24;
+	TEMP_BELOW_M_OUT_OF_RANGE = 25;
+	TEMP_BELOW_C_OUT_OF_RANGE = 26;
+}
+
+// --- MESSAGES ---
+
+message RoastProfile {
+	int32 schema = 1;
+	bytes id = 2;
+	string name = 3;
+	repeated TempPoint temp_points = 4;
+	repeated FanPoint fan_points = 5;
+	TempSensor temp_sensor = 6;
+	FanPoint cooldown_fan = 7;
+	string coffee_name = 8;
+	string user_id = 9;
+	string coffee_id = 10;
+	string coffee_web_url = 11;
+	string profile_type = 12;
+
+	enum TempSensor {
+		ABOVE_BEANS = 0;
+		BELOW_BEANS = 1;
+		ABOVE_ROBUST = 2;
+	}
+}
+
+message TempPoint {
+	int32 time = 1;
+	int32 temp = 2;
+}
+
+message FanPoint {
+	int32 time = 1;
+	int32 power = 2;
+}
+
+message SensorReadings {
+	int32 temp_above = 1;
+	int32 temp_below = 2;
+	int32 fan = 3;
+}
+
+// --- CMD ---
+
+message Cmd {
+	CmdType cmd_type = 1;
+	int32 seq = 2;
+	CmdProfileSet profile_set = 4;
+	CmdSettingGet setting_get = 5;
+	CmdSettingSet setting_set = 6;
+	CmdSettingGetInfo setting_get_info = 7;
+	CmdSettingGetList setting_get_list = 8;
+	CmdMachStatusGetSensors mach_status_get_sensors = 9;
+	CmdStartTest test_start = 10;
+	CmdPropSetName name_set = 11;
+}
+
+message CmdProfileSet {
+	RoastProfile profile = 1;
+}
+
+message CmdSettingGet {
+	int32 number = 1;
+}
+
+message CmdSettingSet {
+	int32 number = 1;
+	int32 val_u32 = 2;
+	int32 val_u32_float = 3;
+}
+
+message CmdSettingGetInfo {
+	int32 number = 1;
+}
+
+message CmdSettingGetList {
+	int32 offset = 1;
+}
+
+message CmdMachStatusGetSensors {
+	int32 time = 1;
+}
+
+message CmdStartTest {
+	int32 test = 1;
+	int32 test_time = 2;
+	int32 room_temp = 3;
+}
+
+message CmdPropSetName {
+	string name = 1;
+}
+
+// --- RESP ---
+
+message Response {
+	int32 seq = 1;
+	GenericResp resp = 2;
+	RespBootloaderGetVersion resp_bootloader_get_version = 3;
+	RespMachPropGetType resp_mach_prop_type = 4;
+	RespMachPropGetID resp_mach_id = 5;
+	RespHistGetProfileRoastCount resp_hist_get_profile_roast_count = 14;
+	RespHistGetTotalRoastCount resp_hist_get_total_roast_count = 15;
+	RespMachPropGetName resp_mach_prop_get_name = 24;
+	RespMachPropGetSupportInfo resp_mach_prop_get_support_info = 21;
+	RespMachStatusGetAll resp_mach_status_get_all = 13;
+	RespMachStatusGetError resp_mach_status_get_error = 12;
+	RespMachStatusGetSensors resp_mach_status_get_sensors = 20;
+	RespMachStatusGetTime resp_mach_status_get_time = 23;
+	RespProfileGet resp_profile_get = 16;
+	RespRoastSummaryGet resp_roast_summary_get = 25;
+	RespSettingGetInfo resp_setting_get_info = 18;
+	RespSettingGetList resp_setting_get_list = 19;
+	RespSettingGet resp_setting_get = 17;
+	RespTestStatusGet resp_test_status_get = 22;
+
+	enum GenericResp {
+		UNSET = 0;
+		OK = 1;
+		ERROR = 2;
+	}
+}
+
+message RespBootloaderGetVersion {
+	int32 version = 1;
+	string revision = 2;
+}
+
+message RespMachPropGetType {
+	MachType type = 1;
+	MachVariant variant = 2;
+
+	enum MachType {
+		v1 = 0;
+		v2 = 1;
+		v3 = 2;
+		v4 = 3;
+		v5 = 4;
+	}
+
+	enum MachVariant {
+		PRO = 0;
+		NESPRESSO = 1;
+		BARE = 2;
+		HOME = 3;
+	}
+}
+
+message RespMachPropGetID {
+	int32 id = 1;
+}
+
+message RespHistGetProfileRoastCount {
+	int32 count = 1;
+}
+
+message RespHistGetTotalRoastCount {
+	int32 count = 1;
+}
+
+message RespMachPropGetName {
+	string name = 3;
+}
+
+message RespMachPropGetSupportInfo {
+	int32 profile_schema = 1;
+}
+
+message RespMachStatusGetAll {
+	int32 time = 1;
+	int32 temp_above = 2;
+	int32 fan = 3;
+	int32 state = 4;
+	int32 heater = 5;
+	int32 p = 6;
+	int32 i = 7;
+	int32 d = 8;
+	int32 setpoint = 9;
+	int32 fan_measured = 10;
+	int32 board_temp = 11;
+	int32 temp_below = 12;
+	int32 fan_rpm_measured = 13;
+	int32 fan_rpm_setpoint = 14;
+	int32 fan_p = 15;
+	int32 fan_i = 16;
+	int32 fan_d = 17;
+	int32 fan_power = 18;
+	int32 j = 19;
+	int32 relay_state = 20;
+	PidSensor pid_sensor = 21;
+	int32 temp_above_filtered = 22;
+	int32 temp_below_filtered = 23;
+	int32 ror_above = 24;
+	int32 ror_below = 25;
+
+	enum PidSensor {
+		UNSET = 0;
+		ABOVE = 1;
+		BELOW = 2;
+	}
+}
+
+message RespMachStatusGetError {
+	int32 error = 1;
+
+	enum ErrorType {
+		UNSET = 0;
+		NONE = 1;
+		BOARD_TOO_HOT = 2;
+		ABOVE_BEANS_TOO_HOT = 3;
+		ABOVE_BEANS_TOO_COLD = 4;
+		FAN_NOT_SPINNING = 5;
+		MOTOR_FAILURE = 6;
+		BELOW_BEANS_TOO_HOT = 7;
+		BELOW_BEANS_TOO_COLD = 8;
+	}
+}
+
+message RespMachStatusGetSensors {
+	int32 time = 1;
+	repeated SensorReadings reading = 2;
+}
+
+message RespMachStatusGetTime {
+	int32 time = 1;
+}
+
+message RespProfileGet {
+	RoastProfile profile = 1;
+}
+
+message RespRoastSummaryGet {
+	int32 roast_done = 1;
+	int32 end_temp_above = 2;
+	int32 end_temp_below = 3;
+}
+
+message RespSettingGetInfo {
+	string name = 1;
+	SettingType type = 2;
+
+	enum SettingType {
+		UNSET = 0;
+		UINT8 = 1;
+		UINT16 = 2;
+		UINT32 = 3;
+		FLOAT = 4;
+	}
+}
+
+message RespSettingGetList {
+	repeated int32 number = 1;
+}
+
+message RespSettingGet {
+	int32 val_u32 = 1;
+	int32 val_u32_float = 2;
+}
+
+message RespTestStatusGet {
+	TestStatus status = 1;
+	TestFailure failure = 2;
+	Test test = 3;
+}
