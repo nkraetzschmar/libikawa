@@ -15,11 +15,12 @@ class Ikawa:
 	ESCAPE_MAPPING = {0x7D: 0x5D, 0x7E: 0x5E}
 	UNESCAPE_MAPPING = {0x5D: 0x7D, 0x5E: 0x7E}
 
-	def __init__(self, reconnect=True, retry_timeout=10):
+	def __init__(self, reconnect=True, reconnect_timeout=60, retry_timeout=10):
 		self.seq = 1 # start with 1 because seq=0 makes Cmd(cmd_type=BOOTLOADER_GET_VERSION) an empty message which the firmware does not seem to handle
 		self.resp_queue = asyncio.Queue()
 		self.recv_buf = bytearray()
 		self.reconnect = True
+		self.reconnect_timeout = reconnect_timeout
 		self.retry_timeout = retry_timeout
 
 	async def __aenter__(self):
@@ -45,7 +46,7 @@ class Ikawa:
 	async def connect(self):
 		self.client = BleakClient(self.target_device, disconnected_callback=self.on_disconnect)
 		t = time.time()
-		while time.time() - t < self.retry_timeout:
+		while time.time() - t < self.reconnect_timeout:
 			print("Trying to connect")
 			try:
 				await self.client.connect()
@@ -86,7 +87,7 @@ class Ikawa:
 			asyncio.get_running_loop().create_task(self.connect())
 
 	async def on_notify(self, sender, data):
-		# print(f"notify recieved: {data}")
+		# print(f"notify recieved: (len={len(data)}) {data}")
 		self.recv_buf += data
 		while True:
 			try:
@@ -119,7 +120,10 @@ class Ikawa:
 		data = cmd.SerializeToString()
 		cmd.seq = 0
 		frame = self.encode_frame(data)
-		await self.send_frame(frame)
+		for i in range(0, len(frame), 20):
+			frame_part = frame[i:i+20]
+			# print(f"sending (len={len(frame_part)}) {frame_part}")
+			await self.send_frame(frame_part)
 		# print("waiting for response")
 		resp = await asyncio.wait_for(self.resp_queue.get(), self.retry_timeout)
 		return resp

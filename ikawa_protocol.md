@@ -23,17 +23,23 @@ Communication between the app and the roaster is facilitated over Bluetooth Low 
 1. Write characteristic `851A4582-19C1-4E6C-AB37-E7A03766BA16` for sending commands to the roaster.
 2. Notify characteristic `948C5059-7F00-46D9-AC55-BF090AE066E3` for receiving responses to commands sent over the write characteristic.
 
+To complete a request-response interaction, a request must be written to the write characteristic, and a listener on the notify characteristic must await the result. Each request and response is tagged with a sequence number to ensure they are correctly matched up.
+
 > [!IMPORTANT]
-> To complete a request-response interaction, a request must be written to the write characteristic, and a listener on the notify characteristic must await the result. Each request and response is tagged with a sequence number to ensure they are correctly matched up.
+> The write characteristic only accepts 20 bytes[^1] at a time, so longer data frames need to be split into multiple writes.
+> Similarly the notify characteristic provides at most 20 bytes at a time, so a notify may not contain a complete frame and the frame may need to be assembled from multiple notify events.
+
+[^1]: MTU size of 23 - 3 bytes for header
 
 ## Frames
 
 Data sent and received are encapsulated in frames, structured as follows:
 
-- Start and end with FRAME_BYTE: `0x7E`
-- Encapsulated payload:
+- Start FRAME_BYTE: `0x7E`
+- Escaped payload:
     - Message data
     - Custom CRC16 checksum
+- End FRAME_BYTE: `0x7E`
 
 Payload escaping is performed by replacing `0x7E` with `0x7D 0x5E` and `0x7D` with `0x7D 0x5D`. This applies to both the message data and the CRC checksum.
 
