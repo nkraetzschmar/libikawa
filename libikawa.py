@@ -3,7 +3,6 @@ import sys
 import time
 from bleak import BleakScanner, BleakClient, BleakError
 from base64 import b64encode, b64decode
-from urllib.parse import urlparse
 from ikawa_pb2 import *
 
 class Ikawa:
@@ -208,7 +207,11 @@ class Ikawa:
 
 	@staticmethod
 	def roast_profile_from_url(url):
-		data_base64 = urlparse(url).query
+		try:
+			index = url.rindex("?")
+			data_base64 = url[index+1:]
+		except ValueError:
+			data_base64 = url
 		data = b64decode(data_base64)
 		roast_profile = RoastProfile.FromString(data)
 		return roast_profile
