@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import asyncio
+import time
 from libikawa import *
 
 async def main():
@@ -33,9 +34,12 @@ async def main():
 
 		while True:
 			cmd = Cmd(cmd_type=MACH_STATUS_GET_ALL)
-			resp = await ikawa.send_cmd(cmd)
-			status = resp.resp_mach_status_get_all
-			print(f"{status.time}, {MachState.Name(status.state)}, {status.temp_above*0.1:.1f}, {status.temp_below*0.1:.1f}, {status.setpoint*0.1:.1f}, {status.heater}, {status.fan/255.0:.2f}, {(status.fan_measured/12.0)*60:.0f}")
+			try:
+				resp = await ikawa.send_cmd(cmd)
+				status = resp.resp_mach_status_get_all
+				print(f"{int(time.time())}, {status.time}, {MachState.Name(status.state)}, {status.temp_above*0.1:.1f}, {status.temp_below*0.1:.1f}, {status.setpoint*0.1:.1f}, {status.heater}, {status.fan/255.0:.2f}, {(status.fan_measured/12.0)*60:.0f}")
+			except TimeoutError:
+				pass
 			await asyncio.sleep(0.1)
 
 try:
