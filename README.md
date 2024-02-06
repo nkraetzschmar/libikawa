@@ -9,6 +9,8 @@ libikawa is an open-source library that implements the communication protocol of
 
 Refer to the [example code](example.py) for a basic guide on how to integrate and use libIkawa within your projects. This sample illustrates the fundamental steps to communicate with the Ikawa Home, leveraging the library's capabilities.[^1]
 
+The library also comes with a basic PoC [CLI tool](cli.py) to control the roaster.
+
 ## Technical Details
 
 The creation of libIkawa was motivated by the desire for a more versatile approach to interacting with the Ikawa Home roaster, beyond the limitations of the official app. The library is the result of reverse engineering the roaster's communication protocol, significantly aided by the prior work of [esteveespuna](https://github.com/esteveespuna/IkawaRoasterEmulator).
