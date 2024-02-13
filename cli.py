@@ -97,6 +97,8 @@ def profile(ctx, profile_url, file_path, send, no_confirm, quiet):
 			print(profile)
 		if no_confirm or click.confirm('Send this profile to the roaster?', default=False):
 			asyncio.run(set_profile(profile, ctx.obj["log_level"]))
+		else:
+			exit(1)
 	else:
 		if not profile:
 			profile = asyncio.run(get_profile(ctx.obj["log_level"]))
